@@ -1,110 +1,153 @@
-// src/app/(app)/dashboard.android.tsx
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { Button } from '@/components/button';
-import { useAuth } from '@/context/AuthContext';
-import React from 'react';
+    import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 
-import { Card } from '@/components/card';
+    import { useState, useEffect } from 'react';
+    import { Button } from '@/components/button';
+    import { useAuth } from '@/context/AuthContext';
+    import React from 'react';
+    import { Card } from '@/components/card';
 
-import flarom from '@assets/images/flareon.gif';
-import eevee from '@assets/images/eevee.gif';
-import vaporeon from '@assets/images/vaporeon.gif';
-import jolteon from '@assets/images/jolteon.gif';
+    // Importando o serviço da API e a tipagem
+    import { getPokemon } from '@/services/api';
+    import { pokemon } from '@/@types/pokemon';
 
-export default function DashboardAndroid() {
-    const { signOut } = useAuth();
+    export default function DashboardAndroid() {
+        const { signOut } = useAuth();
+        // Estados para controlar a lista de pokemons e o carregamento da tela
+        const [pokemonList, setPokemonList] = useState<pokemon[]>([]);
+        const [isLoading, setIsLoading] = useState(true);
+        // use effect para todos os 151 pokemons
 
-   const TextMock = {
-           eevee: (
-               <>
-                   Pokémon de Tipo <Text style={{ fontWeight: 'bold' }}>Normal</Text>, sua genética instável pode de repente mudar notavelmente do ambiente onde vive, abrindo um diverso leque de Evoluções para esta espécie. Possíveis evoluções: <Text style={{ fontWeight: 'bold' }}>Vaporeon, Jolteon, Flareon</Text>.
-               </>
-           ),
-           jolteon: (
-               <>
-                   Pokémon de Tipo <Text style={{ fontWeight: 'bold' }}>Elétrico</Text>, um pokémon extramente temperamental, quando fica furioso, seu pelo fica mais afiado que agulhas. Consegue carregar seu corpo com uma carga maior que 10.000 volts. Evolui de: <Text style={{ fontWeight: 'bold' }}>Eevee</Text>.
-               </>
-           ),
-           vaporeon: (
-               <>
-                   Pokémon de Tipo <Text style={{ fontWeight: 'bold' }}>Água</Text>, sua estrutura celular é extremamente parecida com moléculas de água, permitindo com que este pokémon consiga derreter e ficar praticamente invisível em corpos d'água. Evolui de: <Text style={{ fontWeight: 'bold' }}>Eevee</Text>.
-               </>
-           ),
-           flarom: (
-               <>
-                   Pokémon de Tipo <Text style={{ fontWeight: 'bold' }}>Fogo</Text>, estoca energia termal dentro de sua grande pelagem, fazendo com que seu corpo passe da temperatura de 1650 graus Fahrenheit. Evolui de: <Text style={{ fontWeight: 'bold' }}>Eevee</Text>.
-               </>
-           )
-       };
+        useEffect(() => {
+            async function loadPokemons() {
+                try {
+                    const data = await getPokemon(151); // Busca os 151 da primeira geração
+                    setPokemonList(data);
+                } catch (error) {
+                    console.error("Erro ao carregar lista de pokemons:", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+            loadPokemons();
+        }, []);
+        // tela de loding
+        if (isLoading) {
 
-    return (
-        <View style={styles.background}>
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
+            return (
 
+                <View style={[styles.background, styles.center]}>
+                    <ActivityIndicator size="large" color="#E3350D" />
+                    <Text style={styles.loadingText}>Carregando Pokédex...</Text>
+                </View>
+            );
+        }
+        // Função que dita como cada Card deve ser renderizado dentro da lista
+        const renderPokemonCard = ({ item }: { item: pokemon }) => {
+            // Mapeia os poderes da API para o formato de nós do React com negrito
+            const pokemonStats = item.poderes.map((p, index) => (
+                <Text key={index}>
+                    <Text style={{ fontWeight: 'bold' }}>{p.nome.toUpperCase()}:</Text> {p.forcaPoke}
+                </Text>
+            ));
+
+            // mapeador de segurança para os tipos vindos da PokeAPI
+
+            const typeMap: Record<string, 'normal' | 'fogo' | 'eletrico' | 'agua' | 'grama'> = {
+                normal: 'normal',
+                fire: 'fogo',
+                water: 'agua',
+                electric: 'eletrico',
+                grass: 'grama'
+            };
+            // Pega o primeiro tipo do pokemon (item.tipo[0]) e traduz, se não achar, usa 'normal'
+            const primaryType = typeMap[item.tipo[0]] || 'normal';
+            return (
+                <Card
+                    number={item.index}
+                    name={item.nome.charAt(0).toUpperCase() + item.nome.slice(1)}
+                    type={primaryType}
+                    pokemonImage={{ uri: item.imgPoke }}
+                    details={pokemonStats}
+                />
+            );
+        };
+
+        return (
+            <View style={styles.background}>
                 <View style={styles.header}>
                     <Text style={styles.text}>Sua Pokédex</Text>
                 </View>
 
-                <Card
-                    number="#133"
-                    name="Eevee"
-                    type="normal"
-                    pokemonImage={eevee}
-                    details={[TextMock.eevee]}
+                <FlatList
+                    data={pokemonList}
+                    keyExtractor={(item) => item.index} // index 001 como chave única
+                    renderItem={renderPokemonCard}
+                    numColumns={2}
+                    columnWrapperStyle={{
+                        justifyContent: 'space-between',
+                    }}
+                    contentContainerStyle={[styles.scrollContainer, {
+                        justifyContent: 'center',
+                        paddingHorizontal: 15,
+                    }]}
+
+                    ListFooterComponent={
+                        <View style={styles.footer}>
+                            <View style={styles.buttonWrapper}>
+                                <Button title="Sair" onPress={signOut} />
+                            </View>
+                        </View>
+                    }
                 />
-
-                <Card
-                    number="#134"
-                    name="Vaporeon"
-                    type="agua"
-                    pokemonImage={vaporeon}
-                    details={[TextMock.vaporeon]}
-                />
-
-                <Card
-                    number="#135"
-                    name="Jolteon"
-                    type="eletrico"
-                    pokemonImage={jolteon}
-                    details={[TextMock.jolteon]}
-                />
-
-                <Card
-                    number="#136"
-                    name="Flareon"
-                    type="fogo"
-                    pokemonImage={flarom}
-                    details={[TextMock.flarom]}
-                />
-
-                <Button title="Sair" onPress={signOut} />
-            </ScrollView>
-        </View>
-    );
-}
-
-const styles = StyleSheet.create({
-    background: {
-        flex: 1,
-        backgroundColor: '#4B4B4B', 
-    },
-    scrollContainer: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-        paddingTop: 60,
-        gap: 16,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20,
-        width: '100%',
-    },
-    text: {
-        fontSize: 28, 
-        fontWeight: 'bold',
-        color: '#FFF',
+            </View>
+        );
     }
-});
+
+
+
+    const styles = StyleSheet.create({
+
+        background: {
+            flex: 1,
+            backgroundColor: '#333333',
+        },
+
+        center: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 12
+        },
+
+        loadingText: {
+            color: '#FFF',
+            fontSize: 16,
+            fontWeight: '500'
+        },
+
+        scrollContainer: {
+            padding: 20,
+            paddingTop: 50,
+            paddingBottom: 40,
+        },
+        
+        header: {
+            marginTop: 50,
+            alignItems: 'center',
+            marginBottom: 24,
+            width: '100%',
+        },
+        text: {
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#FFF',
+        },
+        footer: {
+            marginTop: 16,
+            width: '100%',
+            alignItems: 'center'
+        },
+        buttonWrapper: {
+            width: 200,
+        }
+    });

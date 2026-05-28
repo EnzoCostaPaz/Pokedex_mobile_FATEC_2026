@@ -1,92 +1,104 @@
 // src/app/(app)/dashboard.tsx
-import { View, Text, StyleSheet, ImageBackground, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, FlatList, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/button';
 import { useAuth } from '@/context/AuthContext';
 import FundoPoke from '@assets/images/Fundo_Dash.png';
+import React from 'react';
 
 import { Card } from '@/components/card';
-import flarom from '@assets/images/flareon.gif';
-import eevee from '@assets/images/eevee.gif';
-import vaporeon from '@assets/images/vaporeon.gif';
-import jolteon from '@assets/images/jolteon.gif';
-import React from 'react';
+import { getPokemon } from '@/services/api';
+import { pokemon } from '@/@types/pokemon';
 
 export default function Dashboard() {
     const { signOut } = useAuth();
 
-   const TextMock = {
-        eevee: (
-            <>
-                Pokémon de Tipo <Text style={{ fontWeight: 'bold' }}>Normal</Text>, sua genética instável pode de repente mudar notavelmente do ambiente onde vive, abrindo um diverso leque de Evoluções para esta espécie. Possíveis evoluções: <Text style={{ fontWeight: 'bold' }}>Vaporeon, Jolteon, Flareon</Text>.
-            </>
-        ),
-        jolteon: (
-            <>
-                Pokémon de Tipo <Text style={{ fontWeight: 'bold' }}>Elétrico</Text>, um pokémon extramente temperamental, quando fica furioso, seu pelo fica mais afiado que agulhas. Consegue carregar seu corpo com uma carga maior que 10.000 volts. Evolui de: <Text style={{ fontWeight: 'bold' }}>Eevee</Text>.
-            </>
-        ),
-        vaporeon: (
-            <>
-                Pokémon de Tipo <Text style={{ fontWeight: 'bold' }}>Água</Text>, sua estrutura celular é extremamente parecida com moléculas de água, permitindo com que este pokémon consiga derreter e ficar praticamente invisível em corpos d'água. Evolui de: <Text style={{ fontWeight: 'bold' }}>Eevee</Text>.
-            </>
-        ),
-        flarom: (
-            <>
-                Pokémon de Tipo <Text style={{ fontWeight: 'bold' }}>Fogo</Text>, estoca energia termal dentro de sua grande pelagem, fazendo com que seu corpo passe da temperatura de 1650 graus Fahrenheit. Evolui de: <Text style={{ fontWeight: 'bold' }}>Eevee</Text>.
-            </>
-        )
+    const [pokemonList, setPokemonList] = useState<pokemon[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        async function loadPokemons() {
+            try {
+                const data = await getPokemon(151);
+                setPokemonList(data);
+            } catch (error) {
+                console.error("Erro ao carregar lista de pokemons:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        loadPokemons();
+    }, []);
+
+    if (isLoading) {
+        return (
+            <ImageBackground source={FundoPoke} style={[styles.background, styles.center]} resizeMode="cover">
+                <ActivityIndicator size="large" color="#FFF" />
+                <Text style={styles.loadingText}>Carregando Pokédex...</Text>
+            </ImageBackground>
+        );
+    }
+
+    const renderPokemonCard = ({ item }: { item: pokemon }) => {
+        const pokemonStats = item.poderes.map((p, index) => (
+            <Text key={index}>
+                <Text style={{ fontWeight: 'bold' }}>{p.nome.toUpperCase()}:</Text> {p.forcaPoke}
+            </Text>
+        ));
+
+        // Dicionário de tradução dos tipos da API para o seu componente Web
+        const typeMap: Record<string, 'normal' | 'fogo' | 'eletrico' | 'agua' | 'grama'> = {
+            normal: 'normal',
+            fire: 'fogo',
+            water: 'agua',
+            electric: 'eletrico',
+            grass: 'grama'
+        };
+
+        const primaryType = typeMap[item.tipo[0]] || 'normal';
+
+        return (
+            <Card
+                number={item.index}
+                name={item.nome.charAt(0).toUpperCase() + item.nome.slice(1)}
+                type={primaryType}
+                pokemonImage={{ uri: item.imgPoke }}
+                details={pokemonStats}
+            />
+        );
     };
 
-return (
-    <ImageBackground
-        source={FundoPoke}
-        style={styles.background}
-        resizeMode="cover"
-    >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-
+    return (
+        <ImageBackground
+            source={FundoPoke}
+            style={styles.background}
+            resizeMode="cover"
+        >
             <View style={styles.header}>
                 <Text style={styles.text}>Sua Pokédex</Text>
-
             </View>
 
+            <FlatList
+                data={pokemonList}
+                keyExtractor={(item) => item.index}
+                renderItem={renderPokemonCard}
+                contentContainerStyle={[styles.scrollContainer, {
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center'
+                }]}
 
-            <Card
-                number="#133"
-                name="Eevee"
-                type="normal"
-                pokemonImage={eevee}
-                details={[TextMock.eevee]}
+                ListFooterComponent={
+                    <View style={styles.footerContainer}>
+                        <View style={styles.buttonWrapper}>
+                            <Button title="Sair" onPress={signOut} />
+                        </View>
+                    </View>
+                }
             />
-
-              <Card
-                number="#0134"
-                name="Vaporeon"
-                type="agua"
-                pokemonImage={vaporeon}
-                details={[TextMock.vaporeon]}
-            />
-
-            <Card
-                number="#0135"
-                name="Jolteon"
-                type="eletrico"
-                pokemonImage={jolteon}
-                details={[TextMock.jolteon]}
-            />
-
-            <Card
-                number="#0136"
-                name="Flareon"
-                type="fogo"
-                pokemonImage={flarom}
-                details={[TextMock.flarom]}
-            />
-
-            <Button title="Sair" onPress={signOut} />
-        </ScrollView>
-    </ImageBackground>
-);
+        </ImageBackground>
+    );
 }
 
 const styles = StyleSheet.create({
@@ -94,23 +106,38 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-    scrollContainer: {
+    center: {
         justifyContent: 'center',
         alignItems: 'center',
-        display: 'flex',
-        padding: 20,
-        paddingTop: 60,
         gap: 16,
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+    loadingText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#FFF',
+    },
+    scrollContainer: {
         alignItems: 'center',
+        padding: 20,
+        paddingTop: 60,
+        paddingBottom: 40,
+    },
+    header: {
         marginBottom: 20,
+        alignItems: 'center',
+        width: '100%',
     },
     text: {
-        fontSize: 24,
+        fontSize: 32, 
         fontWeight: 'bold',
         color: '#FFF'
+    },
+    footerContainer: {
+        width: '100%',
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    buttonWrapper: {
+        width: 200, // Largura controlada para o botão não ficar gigante na Web
     }
 });
