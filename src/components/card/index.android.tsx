@@ -5,7 +5,23 @@ import { styles } from './styles';
 export type CardProps = {
   number: string;
   name: string;
-  type: 'normal' | 'fogo' | 'eletrico' | 'agua' | 'grama';
+  type: 'normal' |
+  'fogo' |
+  'eletrico' |
+  'agua' |
+  'grama' |
+  'fada' |
+  'fantasma' |
+  'metal' |
+  'gelo' |
+  'lutador' |
+  'psicico' |
+  'veneno' |
+  'voador' |
+  'dragao' |
+  'pedra' |
+  'inseto' |
+  'rocha';
   pokemonImage: ImageSourcePropType;
   details: React.ReactNode[];
 };
@@ -16,6 +32,18 @@ const bgColors = {
   eletrico: '#F7D02C',
   agua: '#6390F0',
   grama: '#7AC74C',
+  fada: '#e33fa2',
+  fantasma: '#672e96', 
+  metal: '#B7B7CE',
+  gelo: '#96D9D6',
+  lutador: '#C22E28',
+  psicico: '#F95587',
+  veneno: '#A33EA1',
+  voador: '#3b738f',
+  dragao: '#5339c8',
+  pedra: '#B6A136',
+  inseto: '#A6B91A',
+  rocha: '#8b7c2f',
 };
 
 export function Card({ number, name, type, pokemonImage, details }: CardProps) {

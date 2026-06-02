@@ -1,9 +1,11 @@
 // src/app/(app)/dashboard.tsx
 import { View, Text, StyleSheet, ImageBackground, FlatList, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/button';
+
+import { Menu } from '@/components/menu';
 import { useAuth } from '@/context/AuthContext';
 import FundoPoke from '@assets/images/Fundo_Dash.png';
+
 import React from 'react';
 
 import { Card } from '@/components/card';
@@ -48,12 +50,41 @@ export default function Dashboard() {
         ));
 
         // Dicionário de tradução dos tipos da API para o seu componente Web
-        const typeMap: Record<string, 'normal' | 'fogo' | 'eletrico' | 'agua' | 'grama'> = {
+        const typeMap: Record<string, 'normal' |
+            'fogo' |
+            'eletrico' |
+            'agua' |
+            'grama' |
+            'fada' |
+            'fantasma' |
+            'metal' |
+            'gelo' |
+            'lutador' |
+            'psicico' |
+            'veneno' |
+            'voador' |
+            'dragao' |
+            'pedra' |
+            'rocha' |
+            'inseto'> = {
+
             normal: 'normal',
             fire: 'fogo',
             water: 'agua',
             electric: 'eletrico',
-            grass: 'grama'
+            grass: 'grama',
+            fairy: 'fada',
+            ghost: 'fantasma',
+            steel: 'metal',
+            ice: 'gelo',
+            fighting: 'lutador',
+            psychic: 'psicico',
+            poison: 'veneno',
+            flying: 'voador',
+            dragon: 'dragao',
+            rock: 'pedra',
+            ground: 'rocha',
+            bug: 'inseto'
         };
 
         const primaryType = typeMap[item.tipo[0]] || 'normal';
@@ -75,9 +106,8 @@ export default function Dashboard() {
             style={styles.background}
             resizeMode="cover"
         >
-            <View style={styles.header}>
-                <Text style={styles.text}>Sua Pokédex</Text>
-            </View>
+            <Menu />
+            <Text style={styles.text}>Sua Pokédex</Text>
 
             <FlatList
                 data={pokemonList}
@@ -89,13 +119,6 @@ export default function Dashboard() {
                     justifyContent: 'center'
                 }]}
 
-                ListFooterComponent={
-                    <View style={styles.footerContainer}>
-                        <View style={styles.buttonWrapper}>
-                            <Button title="Sair" onPress={signOut} />
-                        </View>
-                    </View>
-                }
             />
         </ImageBackground>
     );
@@ -128,7 +151,12 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     text: {
-        fontSize: 32, 
+        display: 'flex',
+        marginBottom: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 30,
+        fontSize: 32,
         fontWeight: 'bold',
         color: '#FFF'
     },
@@ -138,6 +166,6 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     buttonWrapper: {
-        width: 200, // Largura controlada para o botão não ficar gigante na Web
+        width: 200,
     }
 });

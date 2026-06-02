@@ -22,7 +22,7 @@ export default function IndexAndroid() {
 
         if (name === usuarioMock && senha === senhaMock) {
             signIn(name);
-            router.replace('/dashboard');
+            router.replace('/batalha.andoird');
         } else {
             Alert.alert('Erro de Autenticação', 'Nome ou senha incorretos!');
         }

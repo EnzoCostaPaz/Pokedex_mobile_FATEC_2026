@@ -29,7 +29,7 @@ export default function IndexAndroid() {
 
         if (name === usuarioMock && senha === senhaMock) {
             signIn(name);
-            router.replace('/dashboard');
+            router.replace('/batalha');
         } else {
             setAlertTitle('Erro de Autenticação');
             setAlertMessage('Nome ou senha incorretos!');
@@ -72,13 +72,12 @@ export default function IndexAndroid() {
 
             </View>
 
-            {/* 4. Colocamos o componente Alert no final da tela */}
             <Alert 
                 title={alertTitle}
                 message={alertMessage}
                 visible={alertVisible}
-                onClose={() => setAlertVisible(false)} // Esconde o alert quando clicar no X ou no OK
-                type="error" // Cor vermelha do nosso semanticColors
+                onClose={() => setAlertVisible(false)} 
+                type="error" 
             />
 
         </ImageBackground>
