@@ -1,9 +1,9 @@
+import { Button } from '@/components/button';
+import { Logo } from '@/components/logo';
+import { useAuth } from '@/context/AuthContext';
 import React from 'react';
 import { View } from 'react-native';
-import { Button } from '@/components/button';
 import { styles } from './styles';
-import { useAuth } from '@/context/AuthContext';
-import { Logo } from '@/components/logo';
 
 import { router } from 'expo-router';
 
@@ -16,7 +16,7 @@ export function Menu() {
 
     return (
         <View style={styles.container}>
-            <Button title="Perfil" onPress={() => { }} />
+            <Button title="Perfil" onPress={() => { router.replace('/perfil')}} />
             <Button title="Batalhas" onPress={() => { router.replace('/batalha') }} />
 
             <Logo name={LogoIcon} size={200} style={styles.logo} />

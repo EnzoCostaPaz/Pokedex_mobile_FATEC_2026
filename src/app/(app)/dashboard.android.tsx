@@ -1,16 +1,15 @@
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
 import { Card } from '@/components/card';
 import { MenuAndroid } from '@/components/menu/index.android';
+import { useAuth } from '@/context/AuthContext';
+import React, { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import React from 'react';
 
 
 // Importando o serviço da API e a tipagem
-import { getPokemon } from '@/services/api';
 import { pokemon } from '@/@types/pokemon';
+import { getPokemon } from '@/services/api';
 
 export default function DashboardAndroid() {
     const { signOut } = useAuth();
