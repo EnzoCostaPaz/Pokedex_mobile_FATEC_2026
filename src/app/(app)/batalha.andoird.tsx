@@ -1,47 +1,116 @@
 import { getPokemon } from '@/services/api';
+import { getTeam, updateTeam, addCapturedPokemon, deleteCapturedPokemon } from '@/services/pokemonService';
 import { pokemon } from '@/@types/pokemon';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/button';
 import { MenuAndroid } from '@/components/menu/index.android';
 
 import FundoPoke from '@assets/images/Fundo_Dash.png';
 
-import { View, Text, StyleSheet, ImageBackground, ActivityIndicator, FlatList, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, ActivityIndicator, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 
+// Converte o index "025" da PokeAPI para o id numérico esperado pelo backend (25).
+const toId = (poke: pokemon) => parseInt(poke.index, 10);
+
 export default function BatalhaAndroid() {
+    const { userId } = useAuth();
+
     const [pokemonList, setPokemonList] = useState<pokemon[]>([]);
     const [selectedTeam, setSelectedTeam] = useState<pokemon[]>([]);
+    const [initialTeamIds, setInitialTeamIds] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         async function loadPokemons() {
             try {
                 const data = await getPokemon(151);
-                const embararlhar = data.sort(() => Math.random() - 0.5);
-                const escolher25 = embararlhar.slice(0, 25);
-                setPokemonList(escolher25);
 
+                // Busca o time já salvo do usuário no backend.
+                let teamIds: number[] = [];
+                if (userId) {
+                    try {
+                        teamIds = await getTeam(userId);
+                    } catch (teamError) {
+                        console.error('Erro ao carregar o time do usuário:', teamError);
+                    }
+                }
+                setInitialTeamIds(teamIds);
+
+                // Pré-seleciona os pokémons do time salvo.
+                const teamPokemon = data.filter(p => teamIds.includes(toId(p))).slice(0, 5);
+                setSelectedTeam(teamPokemon);
+
+                // Monta o pool: garante que o time apareça e completa com aleatórios até 25.
+                const teamIndexes = new Set(teamPokemon.map(p => p.index));
+                const restantes = data
+                    .filter(p => !teamIndexes.has(p.index))
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, Math.max(0, 25 - teamPokemon.length));
+                setPokemonList([...teamPokemon, ...restantes]);
             } catch (error) {
-                console.error("Erro ao carregar lista de pokemons:", error);
+                console.error('Erro ao carregar lista de pokemons:', error);
             } finally {
                 setIsLoading(false);
             }
         }
         loadPokemons();
-    }, []);
+    }, [userId]);
 
     const SelecionarTime = (poke: pokemon) => {
         const estaNoTime = selectedTeam.some(item => item.index === poke.index);
 
         if (estaNoTime) {
-            // Remove se já estiver no time
+            // Remove do time e libera o pokémon capturado no backend.
             setSelectedTeam(selectedTeam.filter(item => item.index !== poke.index));
-        } else {
-            // Adiciona se houver espaço (limite de 5)
-            if (selectedTeam.length < 5) {
-                setSelectedTeam([...selectedTeam, poke]);
+            if (userId) {
+                deleteCapturedPokemon(userId, toId(poke)).catch(err =>
+                    console.error('Erro ao remover pokémon capturado:', err)
+                );
+            }
+        } else if (selectedTeam.length < 5) {
+            // Adiciona ao time (limite de 5) e captura o pokémon no backend.
+            setSelectedTeam([...selectedTeam, poke]);
+            if (userId) {
+                addCapturedPokemon(userId, toId(poke)).catch(err =>
+                    console.error('Erro ao capturar pokémon:', err)
+                );
             }
         }
     };
+
+    async function salvarTime() {
+        if (!userId) {
+            Alert.alert('Atenção', 'Você precisa estar logado para salvar o time.');
+            return;
+        }
+
+        const currentIds = selectedTeam.map(toId);
+        const removed = initialTeamIds.filter(id => !currentIds.includes(id));
+        const added = currentIds.filter(id => !initialTeamIds.includes(id));
+
+        if (removed.length === 0 && added.length === 0) {
+            Alert.alert('Time', 'Nenhuma alteração para salvar.');
+            return;
+        }
+
+        try {
+            setIsSaving(true);
+            // Persiste cada troca (removido -> novo); sobras enviam o lado vazio.
+            const trocas = Math.max(removed.length, added.length);
+            for (let i = 0; i < trocas; i++) {
+                await updateTeam(userId, removed[i] ?? '', added[i] ?? '');
+            }
+            setInitialTeamIds(currentIds);
+            Alert.alert('Time salvo', 'Seu time foi atualizado com sucesso!');
+        } catch (error) {
+            console.error('Erro ao salvar o time:', error);
+            Alert.alert('Erro', 'Não foi possível salvar o time. Tente novamente.');
+        } finally {
+            setIsSaving(false);
+        }
+    }
 
     if (isLoading) {
         return (
@@ -84,6 +153,14 @@ export default function BatalhaAndroid() {
                 <Text style={styles.title}>Escolha seu Time</Text>
                 <View style={styles.teamContainer}>
                     {renderTeamSlots()}
+                </View>
+
+                <View style={styles.saveButtonWrapper}>
+                    <Button
+                        title={isSaving ? 'Salvando...' : 'Salvar Time'}
+                        onPress={salvarTime}
+                        disabled={isSaving}
+                    />
                 </View>
 
                 {/* --- SEÇÃO DE BAIXO (LISTA DOS 25) --- */}
@@ -132,10 +209,10 @@ const styles = StyleSheet.create({
         paddingBottom: 80,
         flex: 1,
         alignItems: 'center',
-        paddingTop: 40, 
+        paddingTop: 40,
     },
     title: {
-        fontSize: 32, 
+        fontSize: 32,
         fontWeight: 'bold',
         color: '#FFF',
         marginBottom: 20,
@@ -144,10 +221,14 @@ const styles = StyleSheet.create({
     teamContainer: {
         flexDirection: 'row',
         gap: 10,
-        marginBottom: 40,
+        marginBottom: 20,
+    },
+    saveButtonWrapper: {
+        width: 220,
+        marginBottom: 24,
     },
     slotBox: {
-        width: 60, 
+        width: 60,
         height: 60,
         backgroundColor: 'rgba(217, 217, 217, 0.7)',
         borderRadius: 10,
@@ -159,7 +240,7 @@ const styles = StyleSheet.create({
         height: 50,
     },
     plusSign: {
-        fontSize: 36, 
+        fontSize: 36,
         color: '#000',
         fontWeight: '400',
     },
@@ -170,7 +251,7 @@ const styles = StyleSheet.create({
     },
     gridRow: {
         gap: 8,
-        marginBottom: 8, 
+        marginBottom: 8,
         justifyContent: 'center',
     },
     poolBox: {

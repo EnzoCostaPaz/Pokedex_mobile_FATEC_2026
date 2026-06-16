@@ -1,7 +1,6 @@
-// src/app/(auth)/index.android.tsx
-import { router } from 'expo-router';
+import { View, Text, StyleSheet, ImageBackground } from 'react-native';
 import { useState } from 'react';
-import { ImageBackground, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
 
 import { Button } from '@/components/button';
 import { Input } from '@/components/input';
@@ -10,41 +9,51 @@ import { useAuth } from '@/context/AuthContext';
 
 import { Alert } from '@/components/alert';
 
-import FundoLogin from '@assets/images/Fundo_Login.png';
-import LogoIcon from '@assets/images/LogoPoke.svg';
+import FundoLogin from '@assets/images/Fundo_Login.png'; 
+import LogoIcon from '@assets/images/LogoPoke.svg'; 
 import React from 'react';
 
-export default function IndexAndroid() {
+export default function CadastrarUsuario() {
     const [name, setName] = useState<string>('');
     const [senha, setSenha] = useState<string>('');
-    const { signIn } = useAuth();
+    const [confirmarSenha, setConfirmarSenha] = useState<string>('');
 
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertTitle, setAlertTitle] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
+    const [alertType, setAlertType] = useState<'success' | 'error'>('error');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { register } = useAuth();
 
-    async function validarCredenciais() {
-        if (name.trim() === '' || senha.trim() === '') {
-            setAlertTitle('Erro de Autenticação');
-            setAlertMessage('Preencha nome e senha!');
-            setAlertVisible(true);
+    function showAlert(title: string, message: string, type: 'success' | 'error') {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertType(type);
+        setAlertVisible(true);
+    }
+
+    async function VerificarRegistro() {
+        if (name.trim() === '' || senha.trim() === '' || confirmarSenha.trim() === '') {
+            showAlert('Erro de Registro', 'Todos os campos são obrigatórios!', 'error');
+            return;
+        }
+
+        if (senha !== confirmarSenha) {
+            showAlert('Erro de Registro', 'As senhas não coincidem!', 'error');
             return;
         }
 
         try {
             setIsSubmitting(true);
-            await signIn(name, senha);
-            router.replace('/batalha');
+            await register(name, senha);
+            showAlert('Cadastro realizado', 'Conta criada com sucesso! Faça login para continuar.', 'success');
         } catch (error) {
-            setAlertTitle('Erro de Autenticação');
-            setAlertMessage('Nome ou senha incorretos!');
-            setAlertVisible(true);
+            showAlert('Erro de Registro', 'Não foi possível concluir o cadastro. Tente outro usuário.', 'error');
         } finally {
             setIsSubmitting(false);
         }
     }
-
+    
     return (
         <ImageBackground
             source={FundoLogin}
@@ -54,11 +63,12 @@ export default function IndexAndroid() {
             <View style={styles.container}>
                 
                 <View style={styles.logoContainer}>
-                    <Logo name={LogoIcon} size={285} key="LogoLogin"/>
-                    <Text style={styles.title}>Bem Vindo a sua Pokedex</Text>
+                    <Logo name={LogoIcon} size={285} key= "LogoRegister"/>
+                    <Text style={styles.title}>Faça seu cadastro para continuar</Text>
                 </View>
 
                 <View style={styles.formContainer}>
+
                     <Input
                         placeholder='Nome'
                         onChangeText={setName}
@@ -66,31 +76,46 @@ export default function IndexAndroid() {
                     />
 
                     <Input
+                        id='SenhaTXT'
                         placeholder='Senha'
                         secureTextEntry
                         onChangeText={setSenha}
                         value={senha}
                     />
 
+                    <Input
+
+                        id='ConfirmarSenhaTXT'
+                        placeholder='Confirmar Senha'
+                        secureTextEntry
+                        onChangeText={setConfirmarSenha}
+                        value={confirmarSenha}
+                    />
+
                     <Button
-                        title={isSubmitting ? 'Entrando...' : 'Login'}
-                        onPress={validarCredenciais}
+                        title={isSubmitting ? 'Cadastrando...' : 'Registrar'}
+                        onPress={VerificarRegistro}
                         disabled={isSubmitting}
                     />
                      <Button
-                        title='Registrar'
-                        onPress={() => { router.replace('/register') }}
+                        title='Login'
+                        onPress={() => { router.replace('/') }}
                     />
                 </View>
 
             </View>
 
-            <Alert 
+            <Alert
                 title={alertTitle}
                 message={alertMessage}
                 visible={alertVisible}
-                onClose={() => setAlertVisible(false)} 
-                type="error" 
+                onClose={() => {
+                    setAlertVisible(false);
+                    if (alertType === 'success') {
+                        router.replace('/');
+                    }
+                }}
+                type={alertType}
             />
 
         </ImageBackground>

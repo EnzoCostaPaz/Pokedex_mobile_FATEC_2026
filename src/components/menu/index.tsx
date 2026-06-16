@@ -16,8 +16,8 @@ export function Menu() {
 
     return (
         <View style={styles.container}>
-            <Button title="Perfil" onPress={() => { }} />
-            <Button title="Batalhas" onPress={() => { router.replace('/batalha') }} />
+            <Button title="Perfil" onPress={() => { router.replace('/(app)/perfil') }} />
+            <Button title="Batalhas" onPress={() => { router.replace('/(app)/batalha') }} />
 
             <Logo name={LogoIcon} size={200} style={styles.logo} />
 

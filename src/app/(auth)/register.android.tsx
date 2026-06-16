@@ -6,29 +6,38 @@ import { Button } from '@/components/button';
 import { Input } from '@/components/input';
 import { useAuth } from '@/context/AuthContext';
 
+
 import { Logo } from '@/components/logo';
 import LogoIcon from '@assets/images/LogoPoke.svg';
-import FundoLogin from '@assets/images/Fundo_Login.png';
+import FundoLogin from '@assets/images/Fundo_Login.png'; 
 import React from 'react';
 
-export default function IndexAndroid() {
+export default function CadastrarUsuario() {
     const [name, setName] = useState<string>('');
     const [senha, setSenha] = useState<string>('');
-    const { signIn } = useAuth();
+    const [confirmarSenha, setConfirmarSenha] = useState<string>('');
+    const { register } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    async function validarCredenciais() {
-        if (name.trim() === '' || senha.trim() === '') {
-            Alert.alert('Erro de Autenticação', 'Preencha nome e senha!');
+    async function VerificarRegistro() {
+        if (name.trim() === '' || senha.trim() === '' || confirmarSenha.trim() === '') {
+            Alert.alert('Erro de Registro', 'Todos os campos devem estar preenchidos');
+            return;
+        }
+
+        if (senha !== confirmarSenha) {
+            Alert.alert('Erro de Registro', 'As senhas não coincidem');
             return;
         }
 
         try {
             setIsSubmitting(true);
-            await signIn(name, senha);
-            router.replace('/batalha.andoird');
+            await register(name, senha);
+            Alert.alert('Cadastro realizado', 'Conta criada com sucesso! Faça login para continuar.', [
+                { text: 'OK', onPress: () => router.replace('/') },
+            ]);
         } catch (error) {
-            Alert.alert('Erro de Autenticação', 'Nome ou senha incorretos!');
+            Alert.alert('Erro de Registro', 'Não foi possível concluir o cadastro. Tente outro usuário.');
         } finally {
             setIsSubmitting(false);
         }
@@ -43,7 +52,7 @@ export default function IndexAndroid() {
             <View style={styles.container}>
                 <Logo name={LogoIcon} size={350} />
                 <View style={styles.logoContainer}>
-                    <Text style={styles.title}>Bem Vindo a sua Pokedex</Text>
+                   <Text style={styles.title}>Faça seu cadastro para continuar</Text>
                 </View>
 
                 <View style={styles.formContainer}>
@@ -60,15 +69,23 @@ export default function IndexAndroid() {
                         value={senha}
                     />
 
+                    <Input
+                        placeholder='Confirmar Senha'
+                        secureTextEntry
+                        onChangeText={setConfirmarSenha}
+                        value={confirmarSenha}
+                    />
+
+
                     <Button
-                        title={isSubmitting ? 'Entrando...' : 'Login'}
-                        onPress={validarCredenciais}
+                        title={isSubmitting ? 'Cadastrando...' : 'Registrar'}
+                        onPress={VerificarRegistro}
                         disabled={isSubmitting}
                     />
 
-                    <Button
-                        title='Registrar'
-                        onPress={() => { router.replace('/register') }}
+                      <Button
+                        title='Login2'
+                        onPress={() => {router.replace('/')}}
                     />
                 </View>
 
@@ -86,15 +103,15 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 32,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center', 
     },
-    logoContainer: {
+   logoContainer: {
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 40,
     },
     title: {
-        color: '#fff',
+        color: '#fff', 
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 20,
@@ -109,7 +126,8 @@ const styles = StyleSheet.create({
         width: '100%',
         backgroundColor: 'rgba(255, 255, 255, 0.4)',
         padding: 24,
-        borderRadius: 12,
+        borderRadius: 12, 
         alignItems: 'center',
     },
 });
+
