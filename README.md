@@ -20,6 +20,6 @@ Esse é um projeto criado com [Expo](https://expo.dev)
 ### Dados do Perfil
 Utilize uma conta que ja existe ou crie uma nova
 
-###
-tenha o arquivo json postman instalado
+### Arquivo Postman
+é necessario o arquivo json postman instalado para o projeto funcionar
 
