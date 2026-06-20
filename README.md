@@ -17,5 +17,9 @@ Esse é um projeto criado com [Expo](https://expo.dev)
    ```
 
 ## Importante
-### Dados mockados
+### Dados do Perfil
 Utilize uma conta que ja existe ou crie uma nova
+
+###
+tenha o arquivo json postman instalado
+
