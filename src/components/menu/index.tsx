@@ -21,7 +21,7 @@ export function Menu() {
 
             <Logo name={LogoIcon} size={200} style={styles.logo} />
 
-            <Button title="Pokedex" onPress={() => { router.replace('/dashboard') }} />
+            <Button title="Pokedex" onPress={() => { router.replace('/(app)/dashboard') }} />
             <Button title="Sair" onPress={() => { signOut() }} />
         </View>
 

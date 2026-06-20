@@ -15,13 +15,11 @@ export function MenuAndroid() {
     return (
         <View style={[
             styles.containerAndroid,
-            // Se o celular tiver barra (insets.bottom > 0), soma ela com 10px. Se não tiver, usa 25px.
             { paddingBottom: insets.bottom > 0 ? insets.bottom + 10 : 25 }
         ]}>
             
-            {/* Esquerda */}
             <View style={styles.sideGroupAndroid}>
-                <TouchableOpacity style={styles.menuItemAndroid} onPress={() => {}}>
+                <TouchableOpacity style={styles.menuItemAndroid} onPress={() => router.replace('/(app)/perfil')}>
                     <Text style={styles.menuTextAndroid}>Perfil</Text>
                 </TouchableOpacity>
 

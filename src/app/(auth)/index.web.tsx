@@ -1,43 +1,45 @@
-import { View, Text, StyleSheet, ImageBackground, Alert } from 'react-native';
-import { useState } from 'react';
+// src/app/(auth)/index.android.tsx
 import { router } from 'expo-router';
+import { useState } from 'react';
+import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { Input } from '@/components/input';
+import { Logo } from '@/components/logo';
 import { useAuth } from '@/context/AuthContext';
 
+import { Alert } from '@/components/alert';
 
-import { Logo } from '@/components/logo';
+import FundoLogin from '@assets/images/Fundo_Login.png';
 import LogoIcon from '@assets/images/LogoPoke.svg';
-import FundoLogin from '@assets/images/Fundo_Login.png'; 
 import React from 'react';
 
-export default function CadastrarUsuario() {
+export default function IndexAndroid() {
     const [name, setName] = useState<string>('');
     const [senha, setSenha] = useState<string>('');
-    const [confirmarSenha, setConfirmarSenha] = useState<string>('');
-    const { register } = useAuth();
+    const { signIn } = useAuth();
+
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    async function VerificarRegistro() {
-        if (name.trim() === '' || senha.trim() === '' || confirmarSenha.trim() === '') {
-            Alert.alert('Erro de Registro', 'Todos os campos devem estar preenchidos');
-            return;
-        }
-
-        if (senha !== confirmarSenha) {
-            Alert.alert('Erro de Registro', 'As senhas não coincidem');
+    async function validarCredenciais() {
+        if (name.trim() === '' || senha.trim() === '') {
+            setAlertTitle('Erro de Autenticação');
+            setAlertMessage('Preencha nome e senha!');
+            setAlertVisible(true);
             return;
         }
 
         try {
             setIsSubmitting(true);
-            await register(name, senha);
-            Alert.alert('Cadastro realizado', 'Conta criada com sucesso! Faça login para continuar.', [
-                { text: 'OK', onPress: () => router.replace('/') },
-            ]);
+            await signIn(name, senha);
+            router.replace('/batalha');
         } catch (error) {
-            Alert.alert('Erro de Registro', 'Não foi possível concluir o cadastro. Tente outro usuário.');
+            setAlertTitle('Erro de Autenticação');
+            setAlertMessage('Nome ou senha incorretos!');
+            setAlertVisible(true);
         } finally {
             setIsSubmitting(false);
         }
@@ -50,9 +52,10 @@ export default function CadastrarUsuario() {
             resizeMode="cover"
         >
             <View style={styles.container}>
-                <Logo name={LogoIcon} size={350} />
+                
                 <View style={styles.logoContainer}>
-                   <Text style={styles.title}>Faça seu cadastro para continuar</Text>
+                    <Logo name={LogoIcon} size={285} key="LogoLogin"/>
+                    <Text style={styles.title}>Bem Vindo a sua Pokedex</Text>
                 </View>
 
                 <View style={styles.formContainer}>
@@ -69,27 +72,27 @@ export default function CadastrarUsuario() {
                         value={senha}
                     />
 
-                    <Input
-                        placeholder='Confirmar Senha'
-                        secureTextEntry
-                        onChangeText={setConfirmarSenha}
-                        value={confirmarSenha}
-                    />
-
-
                     <Button
-                        title={isSubmitting ? 'Cadastrando...' : 'Registrar'}
-                        onPress={VerificarRegistro}
+                        title={isSubmitting ? 'Entrando...' : 'Login'}
+                        onPress={validarCredenciais}
                         disabled={isSubmitting}
                     />
-
-                      <Button
-                        title='Login'
-                        onPress={() => {router.replace('/')}}
+                     <Button
+                        title='Registrar'
+                        onPress={() => { router.replace('/(auth)/register') }}
                     />
                 </View>
 
             </View>
+
+            <Alert 
+                title={alertTitle}
+                message={alertMessage}
+                visible={alertVisible}
+                onClose={() => setAlertVisible(false)} 
+                type="error" 
+            />
+
         </ImageBackground>
     );
 }
@@ -105,7 +108,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center', 
     },
-   logoContainer: {
+    logoContainer: {
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 40,
@@ -114,20 +117,13 @@ const styles = StyleSheet.create({
         color: '#fff', 
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 20,
+        marginTop: 10,
         textAlign: 'center',
-    },
-    placeholderText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#1F2937',
     },
     formContainer: {
         width: '100%',
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
         padding: 24,
         borderRadius: 12, 
         alignItems: 'center',
-    },
+    }
 });
-

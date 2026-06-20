@@ -1,48 +1,59 @@
-import { View, Text, StyleSheet, ImageBackground, Alert } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground } from 'react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
 
 import { Button } from '@/components/button';
 import { Input } from '@/components/input';
+import { Logo } from '@/components/logo';
 import { useAuth } from '@/context/AuthContext';
 
+import { Alert } from '@/components/alert';
 
-import { Logo } from '@/components/logo';
-import LogoIcon from '@assets/images/LogoPoke.svg';
 import FundoLogin from '@assets/images/Fundo_Login.png'; 
+import LogoIcon from '@assets/images/LogoPoke.svg'; 
 import React from 'react';
 
 export default function CadastrarUsuario() {
     const [name, setName] = useState<string>('');
     const [senha, setSenha] = useState<string>('');
     const [confirmarSenha, setConfirmarSenha] = useState<string>('');
-    const { register } = useAuth();
+
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertType, setAlertType] = useState<'success' | 'error'>('error');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { register } = useAuth();
+
+    function showAlert(title: string, message: string, type: 'success' | 'error') {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertType(type);
+        setAlertVisible(true);
+    }
 
     async function VerificarRegistro() {
         if (name.trim() === '' || senha.trim() === '' || confirmarSenha.trim() === '') {
-            Alert.alert('Erro de Registro', 'Todos os campos devem estar preenchidos');
+            showAlert('Erro de Registro', 'Todos os campos são obrigatórios!', 'error');
             return;
         }
 
         if (senha !== confirmarSenha) {
-            Alert.alert('Erro de Registro', 'As senhas não coincidem');
+            showAlert('Erro de Registro', 'As senhas não coincidem!', 'error');
             return;
         }
 
         try {
             setIsSubmitting(true);
             await register(name, senha);
-            Alert.alert('Cadastro realizado', 'Conta criada com sucesso! Faça login para continuar.', [
-                { text: 'OK', onPress: () => router.replace('/') },
-            ]);
+            showAlert('Cadastro realizado', 'Conta criada com sucesso! Faça login para continuar.', 'success');
         } catch (error) {
-            Alert.alert('Erro de Registro', 'Não foi possível concluir o cadastro. Tente outro usuário.');
+            showAlert('Erro de Registro', 'Não foi possível concluir o cadastro. Tente outro usuário.', 'error');
         } finally {
             setIsSubmitting(false);
         }
     }
-
+    
     return (
         <ImageBackground
             source={FundoLogin}
@@ -50,12 +61,14 @@ export default function CadastrarUsuario() {
             resizeMode="cover"
         >
             <View style={styles.container}>
-                <Logo name={LogoIcon} size={350} />
+                
                 <View style={styles.logoContainer}>
-                   <Text style={styles.title}>Faça seu cadastro para continuar</Text>
+                    <Logo name={LogoIcon} size={285} key= "LogoRegister"/>
+                    <Text style={styles.title}>Faça seu cadastro para continuar</Text>
                 </View>
 
                 <View style={styles.formContainer}>
+
                     <Input
                         placeholder='Nome'
                         onChangeText={setName}
@@ -63,6 +76,7 @@ export default function CadastrarUsuario() {
                     />
 
                     <Input
+                        id='SenhaTXT'
                         placeholder='Senha'
                         secureTextEntry
                         onChangeText={setSenha}
@@ -70,26 +84,40 @@ export default function CadastrarUsuario() {
                     />
 
                     <Input
+
+                        id='ConfirmarSenhaTXT'
                         placeholder='Confirmar Senha'
                         secureTextEntry
                         onChangeText={setConfirmarSenha}
                         value={confirmarSenha}
                     />
 
-
                     <Button
                         title={isSubmitting ? 'Cadastrando...' : 'Registrar'}
                         onPress={VerificarRegistro}
                         disabled={isSubmitting}
                     />
-
-                      <Button
+                     <Button
                         title='Login'
-                        onPress={() => {router.replace('/')}}
+                        onPress={() => { router.replace('/') }}
                     />
                 </View>
 
             </View>
+
+            <Alert
+                title={alertTitle}
+                message={alertMessage}
+                visible={alertVisible}
+                onClose={() => {
+                    setAlertVisible(false);
+                    if (alertType === 'success') {
+                        router.replace('/_sitemap');
+                    }
+                }}
+                type={alertType}
+            />
+
         </ImageBackground>
     );
 }
@@ -105,7 +133,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center', 
     },
-   logoContainer: {
+    logoContainer: {
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 40,
@@ -114,20 +142,13 @@ const styles = StyleSheet.create({
         color: '#fff', 
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 20,
+        marginTop: 10,
         textAlign: 'center',
-    },
-    placeholderText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#1F2937',
     },
     formContainer: {
         width: '100%',
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
         padding: 24,
         borderRadius: 12, 
         alignItems: 'center',
-    },
+    }
 });
-
