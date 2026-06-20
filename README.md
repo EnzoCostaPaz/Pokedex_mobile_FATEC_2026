@@ -18,8 +18,4 @@ Esse é um projeto criado com [Expo](https://expo.dev)
 
 ## Importante
 ### Dados mockados
-Utilize essas informações para a tela de Login
-
-Nome - Ash
-<br>
-Senha - 1234
+Utilize uma conta que ja existe ou crie uma nova
