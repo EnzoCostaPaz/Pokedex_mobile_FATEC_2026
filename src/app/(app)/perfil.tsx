@@ -1,5 +1,6 @@
+import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ImageBackground, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, ImageBackground, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ProfileAvatar } from '@/components/avatar/ProfileAvatar';
@@ -15,13 +16,16 @@ export default function ProfileScreen() {
     const { user } = useAuth();
     const [favoritePokemon, setFavoritePokemon] = useState<pokemon | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    
+    // Estado para guardar o caminho (URI) da imagem escolhida
+    const [avatarUri, setAvatarUri] = useState<string | null>(null);
 
     const trainerData = {
         name: typeof user === 'object' && user !== null ? ((user as any).displayName || (user as any).name || "Ash") : (user || "Ash"),
         age: 18,
         battlesPlayed: 350,
         battlesWon: 280,
-        preferredType: "Elétrico / Fogo",
+        preferredType: "Tech / Code",
     };
 
     useEffect(() => {
@@ -38,6 +42,35 @@ export default function ProfileScreen() {
         }
         loadProfileAndFavorite();
     }, []);
+
+    // Função que abre o explorador de arquivos (Web) ou galeria (Mobile)
+    const pickImage = async () => {
+        try {
+            // 1. Tratamento de Permissões (O Web ignora isso, mas evita travamentos no Mobile)
+            if (Platform.OS !== 'web') {
+                const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                if (status !== 'granted') {
+                    alert('Precisamos de permissão para acessar os arquivos!');
+                    return;
+                }
+            }
+
+            // 2. Abre a janela para escolher a foto
+            let result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true, 
+                aspect: [1, 1], 
+                quality: 1, 
+            });
+
+            // 3. Se o usuário escolheu uma foto, salva a URI no estado
+            if (!result.canceled) {
+                setAvatarUri(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.error("Erro ao tentar abrir os arquivos: ", error);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -67,12 +100,16 @@ export default function ProfileScreen() {
                         
                         <View style={styles.contentLayout}>
                             
-                            {/* Esquerda: Avatar (Empurrado um pouco para a esquerda) */}
+                            {/* Esquerda: Avatar e Botão de Escolher Foto */}
                             <View style={styles.leftSection}>
                                 <ProfileAvatar 
                                     name={trainerData.name} 
-                                    imageSource={require('@assets/images/ash_avatar.jpg')}
+                                    imageSource={avatarUri ? { uri: avatarUri } : undefined} 
                                 />
+                                
+                                <TouchableOpacity style={styles.editButton} onPress={pickImage}>
+                                    <Text style={styles.editButtonText}>Escolher Foto</Text>
+                                </TouchableOpacity>
                             </View>
                             
                             {/* Linha Divisória Central */}
@@ -161,18 +198,37 @@ const styles = StyleSheet.create({
     },
     contentLayout: {
         flexDirection: 'row',
-        alignItems: 'stretch', // Estica os filhos para terem a mesma altura
+        alignItems: 'stretch', 
         justifyContent: 'space-between',
         width: '100%',
     },
     
-    // Configurações de espaçamento lateral
+    // --- LADO ESQUERDO ---
     leftSection: {
         width: '32%', 
         justifyContent: 'center',
         alignItems: 'center', 
         paddingRight: 10,
     },
+    editButton: {
+        marginTop: 15,
+        backgroundColor: '#dc0a2d', 
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        elevation: 3,
+    },
+    editButtonText: {
+        color: '#FFF',
+        fontSize: 14,
+        fontWeight: 'bold',
+    },
+
+    // --- CENTRO ---
     divider: {
         width: 1.5,
         backgroundColor: 'rgba(0,0,0,0.2)', 
@@ -180,16 +236,16 @@ const styles = StyleSheet.create({
         marginTop: 15,
         marginBottom: 15,
     },
+    
+    // --- LADO DIREITO ---
     cardsContainer: {
-        flex: 1, // Ocupa todo o resto do espaço (aprox. 68%)
+        flex: 1, 
         flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: 16, // Cria um espaço consistente entre os dois cards vermelhos
+        gap: 16, 
     },
-    
-    // Estilo Base para os dois cards vermelhos
     cardBase: {
-        flex: 1, // Faz os dois cards dividirem o espaço 50/50
+        flex: 1, 
         backgroundColor: '#dc0a2d', 
         borderRadius: 12,
         padding: 16,
@@ -209,8 +265,6 @@ const styles = StyleSheet.create({
         borderBottomColor: 'rgba(255,255,255,0.3)',
         paddingBottom: 8,
     },
-    
-    // Conteúdo interno do Card 1 (Stats)
     cardContentBox: {
         flex: 1,
         justifyContent: 'center',
@@ -232,8 +286,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         width: '45%',
     },
-    
-    // Conteúdo interno do Card 2 (Pokémon)
     favoriteContentBox: {
         flex: 1,
         alignItems: 'center',
